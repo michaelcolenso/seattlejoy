@@ -1,28 +1,28 @@
 $(document).ready(function() {
 
-  var Stamen_TonerLite = L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.png', {
-    attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  var Stamen_TonerLite = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.png', {
+    attribution: 'Map tiles by <a href="https://stamen.com">Stamen Design</a>, <a href="https://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     subdomains: 'abcd',
     minZoom: 0,
     maxZoom: 20,
     ext: 'png'
   });
 
-  var aerialKC2013 = L.esri.tiledMapLayer("http://gismaps.kingcounty.gov/arcgis/rest/services/BaseMaps/KingCo_Aerial_2013/MapServer", {
+  var aerialKC2013 = L.esri.tiledMapLayer("https://gismaps.kingcounty.gov/arcgis/rest/services/BaseMaps/KingCo_Aerial_2013/MapServer", {
     minZoom: 0,
     maxZoom: 20,
-    attribution: 'Tiles Courtesy of <a href="http://www.kingcounty.gov/operations/GIS.aspx">King County GIS Center</a>',
+    attribution: 'Tiles Courtesy of <a href="https://www.kingcounty.gov/operations/GIS.aspx">King County GIS Center</a>',
 
   });
 
-  var aerialKC1936 = L.esri.tiledMapLayer("http://gismaps.kingcounty.gov/arcgis/rest/services/BaseMaps/KingCo_Aerial_1936/MapServer", {
+  var aerialKC1936 = L.esri.tiledMapLayer("https://gismaps.kingcounty.gov/arcgis/rest/services/BaseMaps/KingCo_Aerial_1936/MapServer", {
     minZoom: 0,
     maxZoom: 20,
-    attribution: 'Tiles Courtesy of <a href="http://www.kingcounty.gov/operations/GIS.aspx">King County GIS Center</a>',
+    attribution: 'Tiles Courtesy of <a href="https://www.kingcounty.gov/operations/GIS.aspx">King County GIS Center</a>',
 
   });
 
-  var houses = L.esri.featureLayer('http://gismaps.kingcounty.gov/arcgis/rest/services/Property/KingCo_PropertyInfo/MapServer/3', {
+  var houses = L.esri.featureLayer('https://gismaps.kingcounty.gov/arcgis/rest/services/Property/KingCo_PropertyInfo/MapServer/3', {
    where: "SalePrice > 1000000 AND Principal_Use = 'RESIDENTIAL'",
    style: function (feature) {
      if(feature.properties.Principal_Use === 'RESIDENTIAL'){
@@ -66,7 +66,7 @@ $(document).ready(function() {
   .addControl(layerControl);
   map.addControl(sidebar);
 
-  var parcels = L.esri.dynamicMapLayer('http://gismaps.kingcounty.gov/arcgis/rest/services/Property/KingCo_PropertyInfo/MapServer', {
+  var parcels = L.esri.dynamicMapLayer('https://gismaps.kingcounty.gov/arcgis/rest/services/Property/KingCo_PropertyInfo/MapServer', {
      opacity: 0.2,
      position: 'back',
      useCors: false
