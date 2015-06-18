@@ -1,154 +1,154 @@
 $(document).ready(function() {
 
-  numeral.defaultFormat('$0,0.00');
+  var Stamen_TonerLite = L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.png', {
+    attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    subdomains: 'abcd',
+    minZoom: 0,
+    maxZoom: 20,
+    ext: 'png'
+  });
 
-  var socket = io();
+  var aerialKC2013 = L.esri.tiledMapLayer("http://gismaps.kingcounty.gov/arcgis/rest/services/BaseMaps/KingCo_Aerial_2013/MapServer", {
+    minZoom: 0,
+    maxZoom: 20,
+    attribution: 'Tiles Courtesy of <a href="http://www.kingcounty.gov/operations/GIS.aspx">King County GIS Center</a>',
 
-  socket.on('id', function(results) {
-    var content;
-      for (i=0; i < results.length; i++) {
-        var gear = {
-          desc: results[i].desc,
-          qty: results[i].qty,
-          cost: results[i].cost
-        }
-       var cost = numeral(gear.cost);
-       content = $( "<ul class='list-unstyled'><li><h4 class='armyguns'><strong>(" + gear.qty + ")</strong>&nbsp;" + gear.desc + "&nbsp;</h4><p><small>Total Original Acquisition Value: </small><strong style='color: #DD0048;'>" + cost.format() + "</strong></p></li></ul>" );
-       content.appendTo($("#sidebar"));
-      }
-      sidebar.show();
-    });
+  });
 
-     var map = L.map('map', {center: [39.8282, -98.5795], zoom: 4})
-        .addLayer(new L.tileLayer.provider('Stamen.TonerBackground'));
+  var aerialKC1936 = L.esri.tiledMapLayer("http://gismaps.kingcounty.gov/arcgis/rest/services/BaseMaps/KingCo_Aerial_1936/MapServer", {
+    minZoom: 0,
+    maxZoom: 20,
+    attribution: 'Tiles Courtesy of <a href="http://www.kingcounty.gov/operations/GIS.aspx">King County GIS Center</a>',
 
-     var legend = L.control({position: 'topright'});
+  });
 
-     //map.legendControl.addLegend(document.getElementById('legend').innerHTML);
+  var houses = L.esri.featureLayer('http://gismaps.kingcounty.gov/arcgis/rest/services/Property/KingCo_PropertyInfo/MapServer/3', {
+   where: "SalePrice > 1000000 AND Principal_Use = 'RESIDENTIAL'",
+   style: function (feature) {
+     if(feature.properties.Principal_Use === 'RESIDENTIAL'){
+       return {
+         color: '#BD1550',
+         weight: 4,
+         fillColor: 'rgba(0,0,0,0.0)'
 
-    var sidebar = L.control.sidebar('sidebar', {
-      position: 'left'
-    });
+          };
+     }
+   }
 
-    legend.onAdd = function (map) {
-      var div = L.DomUtil.create('div', 'info legend nav'),
-          products = [ 'Under $1', '$1 < $10', '$10 < $50', '$50 < $100', '$100 < $1000' ],
-          labels = [];
-      div.innerHTML += '<p class="lead muted">1033 Program Military Equipment Acquisition Costs Per Household</p>';
+ });
 
-      // loop through our buckets and generate a label with a colored square for each interval
-      for (var i = 0; i < products.length; i++) {
-          div.innerHTML +=
-              '<span class="legend" style="background:' + getColor(products[i]) + '"></span><label> ' +
-              products[i] +  '</label><br>';
-      }
-      div.innerHTML += '<h4><span style="color: #DD0048" class="ion-arrow-left-a"></span>Click on a county for details</h4><p><small>Data Source: <a href="https://github.com/TheUpshot/Military-Surplus-Gear">The New York Times via Github</a></small></p>';
-      return div;
-    };
-    map.addControl(sidebar);
+  var baseMaps = {
+    "Stamen Toner Lite": Stamen_TonerLite,
+    "King County Aerial [2013]": aerialKC2013,
+    "King County Aerial [1936]": aerialKC1936
+  };
 
-    legend.addTo(map);
+  var sidebar = L.control.sidebar('sidebar', {
+      closeButton: true,
+      position: 'right'
+  });
 
-    function getColor(d) {
-
-    return d == 'Under $1' ? '#bcbddc' :
-           d == '$1 < $10' ? '#9e9ac8' :
-           d == '$10 < $50' ? '#807dba' :
-           d == '$50 < $100' ? '#6a51a3' :
-           d == '$100 < $1000' ? '#4a1486' :
-           d == 'Parts' ? '#800026' :
-                      '#FFEDA0';
-    }
-
-  var div = d3.select("#map")
-      .append("div")
-      .attr("class", "tooltip")
-      .style("background", "rgba(0,0,0,0.7)")
-      .style("opacity", 0);
-
-  var color = d3.scale.threshold()
-    .domain( [1, 10, 50, 100, 1000])
-    .range([ "#bcbddc", "#9e9ac8", "#807dba", "#6a51a3", "#4a1486"]);
+  var layerControl = L.control.layers(baseMaps);
+  layerControl.setPosition('bottomleft');
 
 
-    d3.json("/js/us.json", function(error, us) {
-        if (error) return console.error(error);
+  var southWest = L.latLng(47.4949723847, -122.4937073234),
+  northEast = L.latLng(47.7381413304, -121.9732332793),
+  bounds = L.latLngBounds(southWest, northEast),
+  center = bounds.getCenter();
 
-        var svg = d3.select(map.getPanes().overlayPane).append("svg"),
-          g = svg.append("g").attr("class", "leaflet-zoom-hide");
+  var map = L.map('map', {
+    center: center,
+    maxBounds: bounds,
+    zoom: 12,
+    layers: [Stamen_TonerLite]
+    })
+  .addControl(layerControl);
+  map.addControl(sidebar);
 
-        var transform = d3.geo.transform({point: projectPoint}),
-            path = d3.geo.path().projection(transform);
+  var parcels = L.esri.dynamicMapLayer('http://gismaps.kingcounty.gov/arcgis/rest/services/Property/KingCo_PropertyInfo/MapServer', {
+     opacity: 0.2,
+     position: 'back',
+     useCors: false
+  });
 
-        var feature = g.selectAll("path")
-            .data(topojson.feature(us, us.objects.counties).features)
-          .enter().append("path")
-            .style("fill", function(d) {
-              var cost = d.properties.cost;
-              var households = d.properties.households;
-              var costPerHousehold = cost / households;
-              return color(costPerHousehold);
-            })
-            .style({ 'stroke': 'rgba(0,0,0,1)', 'stroke-width': '0.3px' })
-            .attr("d", path)
-            .on("mouseover", function(d) {
-              var county = d.properties.Areaname;
-              var cost = numeral(d.properties.cost);
+   parcels.addTo(map);
+   houses.addTo(map);
 
-              if (county == undefined) {
-                county = 'No 1033 Program Acquisitions';
-              }
+   var identifiedFeature;
+   var pane = document.getElementById('selectedFeatures');
+   var details = document.getElementById('propertyDetails');
 
-                div.transition().duration(500).style("opacity", 0);
-                div.transition().duration(200).style("opacity", .9);
-                div.html( "<h3>" + county + "</h3><p><span class='ion-jet'></span>" + cost.format('$ 0,0[.]00') + "</p>").style("left", (d3.event.pageX) + "px").style("top", (d3.event.pageY) + "px");
-            })
-
-            .on("mouseout", function(d) {
-              div.transition().duration(500).style("opacity", 0);
-            })
-
-            .on("click", function(d) {
-                  $("#sidebar").empty();
-
-                  var county = d.properties.Areaname;
-                  var households = numeral(d.properties.households);
-                  var cost = numeral(d.properties.cost);
-                  var costPerHousehold = numeral(d.properties.cost / d.properties.households);
-
-                  if (county == undefined) {
-                    sidebar.hide();
-                    return;
-                  } else {
-                    $("#sidebar").prepend('<p class="lead"><span class="s-1">Since 2006</span>, state and local law enforcement agencies in <span class="s-2">' + county + ' </span> requested and recieved around <span class="s-3">' + cost.format() + ' </span>  worth of Military Equipment via the <a href="http://www.dispositionservices.dla.mil/leso/Pages/1033ProgramFAQs.aspx">Department of Defense 1033 Program.</a><p><span class="s-4"> There are approximately ' + households.format('0,0') + ' households in ' + county + ' </span ></p></br><span class="s-5">Cost per Household: ' + costPerHousehold.format() + '</span></p><hr/><p class="s-items"><span class="ion-clipboard"></span>Items Recieved <span style="color: #DD0048; vertical-align: middle" class="ion-arrow-down-a"></span></p>');
-                  }
-                  socket.emit('getid', county);
-                  });
-
-        map.on("viewreset", reset);
-        reset();
-
-        function reset() {
-          var bounds = path.bounds(topojson.feature(us, us.objects.counties)),
-              topLeft = bounds[0],
-              bottomRight = bounds[1];
-
-          svg .attr("width", bottomRight[0] - topLeft[0])
-              .attr("height", bottomRight[1] - topLeft[1])
-              .style("left", topLeft[0] + "px")
-              .style("top", topLeft[1] + "px");
-
-          g   .attr("transform", "translate(" + -topLeft[0] + "," + -topLeft[1] + ")");
-
-          feature
-            .attr("d", path);
-        }
-
-    // Use Leaflet to implement a D3 geometric transformation.
-    function projectPoint(x, y) {
-      var point = map.latLngToLayerPoint(new L.LatLng(y, x));
-      this.stream.point(point.x, point.y);
-    }
-
+   function renderImage(url) {
+     $('#featuredImage').css( {
+        'background-image': 'url("' + url + '")'
       });
+   };
+
+   function renderDetails(details) {
+     return L.Util.template('<div class="detailContainer"><div class="flex"> <div>{totalSquareFootage}<div class="propertyLabel">sq. ft.</div></div> <div>{beds}<div class="propertyLabel">bedrooms</div></div> <div>{baths}<div class="propertyLabel">bathrooms</div></div> <div>{yearBuilt}<div class="propertyLabel">year built</div></div></div> </div>', details);
+   };
+
+   function getImage(pin) {
+     $.get("/api/images/" + pin + "", function (data) {
+     function render () {
+       renderImage(data.propertyDetails.imageUrl);
+       details.innerHTML = renderDetails(data.propertyDetails);
+       console.log(data.propertyDetails);
+     };
+
+     render();
+
+     });
+   };
+
+
+   function getPane(featureCollection) {
+     var sale_date = moment(featureCollection.features[0].properties.SaleDate).fromNow();
+     var sale_price = numeral(featureCollection.features[0].properties.SalePrice).format('$ 0,0[.]00');
+     var pin = featureCollection.features[0].properties.PIN;
+     getImage(pin);
+
+     return L.Util.template(
+         '<div class="headlineContainer"><h1 id="headline"><span class="addr">{FullAddr}</span> sold for&nbsp;<br><span class="price">' + sale_price + '</span><br>&nbsp;about&nbsp;<span class="when">' + sale_date + '</span></h1></div>', featureCollection.features[2].properties);
+
+   };
+
+   houses.on('click', function (e) {
+    if(identifiedFeature){
+      map.removeLayer(identifiedFeature);
+      pane.innerHTML = 'Loading';
+
+    } else { sidebar.toggle();}
+    parcels.identify().on(map).at(e.latlng).run(function(error, featureCollection){
+      // console.log(featureCollection)
+      if (featureCollection.features.length > 0){
+        identifiedFeature = new L.GeoJSON(featureCollection.features[0], {
+          style: function(){
+            return {
+              color: '#3be579',
+              weight: 8,
+              opacity: 1,
+              fillOpacity: 0
+            };
+          }
+        }).addTo(map);
+
+
+
+        pane.innerHTML = getPane(featureCollection);
+        sidebar.show();
+        $(".price").fitText(1.4, { minFontSize: '50px', maxFontSize: '72px' });
+      }
+    });
+  });
+
+  $("#featuredImage").on("click", function() {
+    var visible = sidebar.isVisible();
+    if (!visible) {
+      sidebar.show();
+    } else {
+      sidebar.hide();
+    }
+  });
 });

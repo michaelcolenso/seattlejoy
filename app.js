@@ -142,6 +142,7 @@ app.get('/api/steam', apiController.getSteam);
 app.get('/api/stripe', apiController.getStripe);
 app.post('/api/stripe', apiController.postStripe);
 app.get('/api/scraping', apiController.getScraping);
+app.get('/api/images/:PIN', apiController.getImage);
 app.get('/api/twilio', apiController.getTwilio);
 app.post('/api/twilio', apiController.postTwilio);
 app.get('/api/clockwork', apiController.getClockwork);

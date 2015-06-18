@@ -17,13 +17,20 @@
 //= require lib/bootstrap.min
 //= require socket.io-client/socket.io
 //= require leaflet/dist/leaflet
+//= require esri-leaflet/dist/esri-leaflet
 //= require leaflet-providers/leaflet-providers
 //= require leaflet-sidebar/src/L.Control.Sidebar
-//= require leaflet-dvf
+//= require shp/dist/shp.min
+//= require leaflet-vector-layers/dist/lvector
+//= require leaflet-geojson-list/leaflet-geojson-list.min
+//= require leaflet-dvf/dist/leaflet-dvf.js
+//= require Leaflet.label/dist/leaflet.label-src.js
 //= require geojson.min
 //= require moment/min/moment.min
 //= require underscore/underscore
 //= require d3/d3.min
 //= require topojson/topojson
 //= require numeral/min/numeral.min
+//= require fittext/fittext
+
 //= require main

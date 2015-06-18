@@ -13,6 +13,7 @@ logs
 results
 tmp
 data
+property
 
 npm-debug.log
 node_modules

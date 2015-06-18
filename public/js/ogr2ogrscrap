@@ -1,0 +1,1 @@
+ogr2ogr -f GeoJSON -spat -1.3609465777203677E7 5971398.773559451 1.3511837106381902E7 ymax -s_srs EPSG:4326 -t_srs EPSG:4326 kingcountygeo.json "http://gismaps.kingcounty.gov/arcgis/rest/services/Property/KingCo_Parcels/MapServer/0/query?where=objectid+%3D+objectid&outfields=*&f=json" OGRGeoJSON

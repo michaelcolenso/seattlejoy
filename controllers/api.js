@@ -17,6 +17,7 @@ var Linkedin = require('node-linkedin')(secrets.linkedin.clientID, secrets.linke
 var clockwork = require('clockwork')({key: secrets.clockwork.apiKey});
 var ig = require('instagram-node').instagram();
 var Y = require('yui/yql');
+var base64 = require('node-base64-image');
 var _ = require('lodash');
 
 /**
@@ -136,6 +137,45 @@ exports.getScraping = function(req, res, next) {
       links: links
     });
   });
+};
+
+exports.getImage = function (req, res, next) {
+
+  var pin = req.params.PIN;
+  var imgUrl = "http://info.kingcounty.gov/Assessor/eRealProperty/Dashboard.aspx?ParcelNbr=" + pin + "";
+
+  request.get(imgUrl, function(err, request, body) {
+      if (err) return next(err);
+      var $ = cheerio.load(body);
+      var image = $("#kingcounty_gov_cphContent_FormViewPictCurr_CurrentImage");
+      var details = []
+        $("td", "#kingcounty_gov_cphContent_DetailsViewPropTypeR").each(function() {
+          details.push( $(this).text() );
+        });
+
+      image.src = $(image).attr("src");
+
+      var propertyDetails =
+      {
+        imageUrl: 'http://info.kingcounty.gov/Assessor/eRealProperty/' + image.src,
+        yearBuilt: details[1],
+        totalSquareFootage: details[3],
+        beds: details[5],
+        baths: details[7],
+        grade: details[9],
+        condition: details[11],
+        lotSize: details[13],
+        views: details[15],
+        waterfront: details[17]
+      };
+
+      res.send({
+        propertyDetails: propertyDetails
+      });
+    });
+
+
+
 };
 
 /**

@@ -1,0 +1,14 @@
+{
+  "name": "leaflet.shapefile",
+  "homepage": "https://github.com/calvinmetcalf/leaflet.shapefile",
+  "_release": "36c7f96ef3",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "36c7f96ef3929fd90261f6794620ae87eec264cf"
+  },
+  "_source": "git://github.com/calvinmetcalf/leaflet.shapefile.git",
+  "_target": "*",
+  "_originalSource": "leaflet.shapefile",
+  "_direct": true
+}
