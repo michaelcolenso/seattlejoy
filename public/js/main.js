@@ -78,6 +78,12 @@ $(document).ready(function() {
    var identifiedFeature;
    var pane = document.getElementById('selectedFeatures');
    var details = document.getElementById('propertyDetails');
+   var logo;
+
+   function animateIcon() {
+
+     return logo;
+   }
 
    function renderImage(url) {
      $('#featuredImage').css( {
@@ -121,7 +127,6 @@ $(document).ready(function() {
 
     } else { sidebar.toggle();}
     parcels.identify().on(map).at(e.latlng).run(function(error, featureCollection){
-      // console.log(featureCollection)
       if (featureCollection.features.length > 0){
         identifiedFeature = new L.GeoJSON(featureCollection.features[0], {
           style: function(){
@@ -138,7 +143,7 @@ $(document).ready(function() {
 
         pane.innerHTML = getPane(featureCollection);
         sidebar.show();
-        $(".price").fitText(1.4, { minFontSize: '50px', maxFontSize: '72px' });
+        $(".price").fitText(1.2, { minFontSize: '60px', maxFontSize: '80px' });
       }
     });
   });
@@ -151,4 +156,5 @@ $(document).ready(function() {
       sidebar.hide();
     }
   });
+
 });

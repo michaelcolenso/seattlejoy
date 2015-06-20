@@ -10,8 +10,8 @@
 @gray-dark: #404040;
 @gray-darker: #121212;
 
-@brand-primary: #2ac5ee;
-@brand-success: #0f9d58;
+@brand-primary: #4DAB8C;
+@brand-success: #F04155;
 @brand-warning: #f4b400;
 @brand-danger: #d80017;
 @brand-info: #5bc0dd;
@@ -35,9 +35,9 @@ footer {
 @font-family-base: 'Montserrat', sans-serif;
 @headings-font-family: 'Montserrat', sans-serif;
 @headings-font-weight: 700;
-@text-color: @gray-darker;
-@link-color: @brand-primary;
-@link-hover-color: @gray-darker;
+@text-color: @gray-dark;
+@link-color: @brand-success;
+@link-hover-color: @brand-primary;
 
 a {
   transition: all .4s cubic-bezier(.24,.45,.46,.92);
@@ -134,18 +134,21 @@ p {
 @navbar-default-link-color: @gray-darker;
 @navbar-default-link-active-color: @brand-primary;
 @navbar-default-link-active-bg: transparent;
-@navbar-default-link-hover-color: @brand-primary;
+@navbar-default-link-hover-color: @brand-success;
 @navbar-default-link-hover-bg: transparent;
 @navbar-default-brand-color: @gray-darker;
-@navbar-default-brand-hover-color: @brand-primary;
+@navbar-default-brand-hover-color: @brand-success;
 
 .navbar-default {
   border: 0;
   box-shadow: 0 1px 5px rgba(0,0,0,.15);
 
-  .navbar-nav {
-    > li > a {
-      transition: color .4s cubic-bezier(.24,.45,.46,.92);
+  .navbar-header a {
+      color: @gray-darker;
+      transition: color .6s cubic-bezier(.24,.45,.46,.92);
+
+      &:hover {
+        color: @brand-primary;
+      }
     }
   }
-}
