@@ -14,6 +14,7 @@ results
 tmp
 data
 property
+config/secrets.js
 
 npm-debug.log
 node_modules
