@@ -7,7 +7,7 @@
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/michaelcolenso/seattlejoy"
   },
   "dependencies": {
     "JSONStream": "^0.9.0",
