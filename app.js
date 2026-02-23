@@ -31,6 +31,8 @@ var contactController = require('./controllers/contact');
 
 var secrets = require('./config/secrets');
 var passportConf = require('./config/passport');
+var mongoUrl = process.env.MONGO_URL || process.env.MONGOLAB_URI || process.env.MONGODB_URI ||
+  (process.env.NODE_ENV !== 'production' ? secrets.db : null);
 
 /**
  * Create Express server.
@@ -45,10 +47,14 @@ var io = require('socket.io').listen(server);
  * Connect to MongoDB.
  */
 
-mongoose.connect(secrets.db);
-mongoose.connection.on('error', function() {
-  console.error('MongoDB Connection Error. Make sure MongoDB is running.');
-});
+if (mongoUrl) {
+  mongoose.connect(mongoUrl);
+  mongoose.connection.on('error', function() {
+    console.error('MongoDB Connection Error. Make sure MongoDB is running.');
+  });
+} else {
+  console.warn('MONGO_URL/MONGOLAB_URI not set. Running without MongoDB-backed auth/session data.');
+}
 
 var hour = 3600000;
 var day = hour * 24;
@@ -75,13 +81,20 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(expressValidator());
 app.use(methodOverride());
 app.use(cookieParser());
-app.use(session({
+var sessionConfig = {
   secret: secrets.sessionSecret,
-  store: new MongoStore({
-    url: secrets.db,
+  resave: false,
+  saveUninitialized: false
+};
+
+if (mongoUrl) {
+  sessionConfig.store = new MongoStore({
+    url: mongoUrl,
     auto_reconnect: true
-  })
-}));
+  });
+}
+
+app.use(session(sessionConfig));
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
@@ -212,14 +225,31 @@ app.use(errorHandler());
 io.sockets.on('connection', function(socket) {
 
       socket.on('getid', function(data) {
-          MongoClient.connect( secrets.db, function(err, db) {
-            if(err) throw err;
+          if (!mongoUrl) {
+            socket.emit('id', []);
+            return;
+          }
+
+          MongoClient.connect(mongoUrl, function(err, db) {
+            if (err) {
+              console.error('MongoDB Connection Error in socket handler:', err.message);
+              socket.emit('id', []);
+              return;
+            }
             var collection = db.collection('id_county_item');
             console.log(data);
             var name = data;
             collection.find( { Areaname : name }).toArray(function(err, results) {
+              if (err) {
+                console.error('MongoDB query error in socket handler:', err.message);
+                socket.emit('id', []);
+                return;
+              }
               console.dir(results.length);
               socket.emit("id", results);
+              if (db && typeof db.close === 'function') {
+                db.close();
+              }
             });
           });
       });

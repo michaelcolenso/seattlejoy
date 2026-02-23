@@ -1,6 +1,9 @@
 {
   "name": "seattlejoy",
   "version": "0.0.1",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node app.js",
     "test": "mocha"
