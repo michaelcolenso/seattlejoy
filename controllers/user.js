@@ -274,7 +274,7 @@ exports.postReset = function(req, res, next) {
         });
     },
     function(user, done) {
-      var smtpTransport = nodemailer.createTransport('SMTP', {
+      var smtpTransport = nodemailer.createTransport({
         service: 'SendGrid',
         auth: {
           user: secrets.sendgrid.user,
@@ -352,7 +352,7 @@ exports.postForgot = function(req, res, next) {
       });
     },
     function(token, user, done) {
-      var smtpTransport = nodemailer.createTransport('SMTP', {
+      var smtpTransport = nodemailer.createTransport({
         service: 'SendGrid',
         auth: {
           user: secrets.sendgrid.user,

@@ -8,17 +8,15 @@ var errorHandler = require('errorhandler');
 var csrf = require('lusca').csrf();
 var methodOverride = require('method-override');
 var request = require('request');
-var parser = require('JSONStream').parse('features.*.attributes');
 var fs = require('fs');
 
 var _ = require('lodash');
-var MongoStore = require('connect-mongo')({ session: session });
+var MongoStore = require('connect-mongo');
 var flash = require('express-flash');
 var path = require('path');
 var mongoose = require('mongoose');
 var passport = require('passport');
 var expressValidator = require('express-validator');
-var connectAssets = require('connect-assets');
 
 /**
  * Controllers
@@ -41,7 +39,7 @@ var mongoUrl = process.env.MONGO_URL || process.env.MONGOLAB_URI || process.env.
 var app = express();
 var http = require('http');
 var server = http.createServer(app);
-var io = require('socket.io').listen(server);
+var io = require('socket.io')(server);
 
 /**
  * Connect to MongoDB.
@@ -69,12 +67,8 @@ var csrfExclude = ['/url1', '/url2'];
 
 app.set('port', process.env.PORT || 8080);
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+app.set('view engine', 'pug');
 app.use(compress());
-app.use(connectAssets({
-  paths: ['public/css', 'public/js'],
-  helperContext: app.locals
-}));
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -88,9 +82,8 @@ var sessionConfig = {
 };
 
 if (mongoUrl) {
-  sessionConfig.store = new MongoStore({
-    url: mongoUrl,
-    auto_reconnect: true
+  sessionConfig.store = MongoStore.create({
+    mongoUrl: mongoUrl
   });
 }
 
@@ -100,7 +93,7 @@ app.use(passport.session());
 app.use(flash());
 app.use(function(req, res, next) {
   // CSRF protection.
-  if (_.contains(csrfExclude, req.path)) return next();
+  if (_.includes(csrfExclude, req.path)) return next();
   csrf(req, res, next);
 });
 app.use(function(req, res, next) {
@@ -222,7 +215,7 @@ app.get('/auth/venmo/callback', passport.authorize('venmo', { failureRedirect: '
 
 app.use(errorHandler());
 
-io.sockets.on('connection', function(socket) {
+io.on('connection', function(socket) {
 
       socket.on('getid', function(data) {
           if (!mongoUrl) {
