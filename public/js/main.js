@@ -1,160 +1,221 @@
-$(document).ready(function() {
+(function () {
+  'use strict';
 
-  var Stamen_TonerLite = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.png', {
-    attribution: 'Map tiles by <a href="https://stamen.com">Stamen Design</a>, <a href="https://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    subdomains: 'abcd',
-    minZoom: 0,
-    maxZoom: 20,
-    ext: 'png'
-  });
+  // --- Date filter: last 12 months (epoch milliseconds for ESRI date fields) ---
+  var oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  var dateEpoch = oneYearAgo.getTime();
 
-  var aerialKC2013 = L.esri.tiledMapLayer("https://gismaps.kingcounty.gov/arcgis/rest/services/BaseMaps/KingCo_Aerial_2013/MapServer", {
-    minZoom: 0,
-    maxZoom: 20,
-    attribution: 'Tiles Courtesy of <a href="https://www.kingcounty.gov/operations/GIS.aspx">King County GIS Center</a>',
+  // --- Price tiers ---
+  function priceColor(price) {
+    if (price >= 5000000) return '#6d0000';
+    if (price >= 3000000) return '#bd1550';
+    if (price >= 2000000) return '#e84545';
+    if (price >= 1500000) return '#f4845f';
+    return '#f9c784';
+  }
 
-  });
+  function priceRadius(price) {
+    if (price >= 5000000) return 10;
+    if (price >= 3000000) return 8;
+    if (price >= 2000000) return 7;
+    if (price >= 1500000) return 6;
+    return 5;
+  }
 
-  var aerialKC1936 = L.esri.tiledMapLayer("https://gismaps.kingcounty.gov/arcgis/rest/services/BaseMaps/KingCo_Aerial_1936/MapServer", {
-    minZoom: 0,
-    maxZoom: 20,
-    attribution: 'Tiles Courtesy of <a href="https://www.kingcounty.gov/operations/GIS.aspx">King County GIS Center</a>',
-
-  });
-
-  var houses = L.esri.featureLayer('https://gismaps.kingcounty.gov/arcgis/rest/services/Property/KingCo_PropertyInfo/MapServer/3', {
-   where: "SalePrice > 1000000 AND Principal_Use = 'RESIDENTIAL'",
-   style: function (feature) {
-     if(feature.properties.Principal_Use === 'RESIDENTIAL'){
-       return {
-         color: '#BD1550',
-         weight: 4,
-         fillColor: 'rgba(0,0,0,0.0)'
-
-          };
-     }
-   }
-
- });
-
-  var baseMaps = {
-    "Stamen Toner Lite": Stamen_TonerLite,
-    "King County Aerial [2013]": aerialKC2013,
-    "King County Aerial [1936]": aerialKC1936
-  };
-
-  var sidebar = L.control.sidebar('sidebar', {
-      closeButton: true,
-      position: 'right'
-  });
-
-  var layerControl = L.control.layers(baseMaps);
-  layerControl.setPosition('bottomleft');
-
-
-  var southWest = L.latLng(47.4949723847, -122.4937073234),
-  northEast = L.latLng(47.7381413304, -121.9732332793),
-  bounds = L.latLngBounds(southWest, northEast),
-  center = bounds.getCenter();
+  // --- Map ---
+  var bounds = L.latLngBounds(
+    L.latLng(47.40, -122.55),
+    L.latLng(47.80, -121.90)
+  );
 
   var map = L.map('map', {
-    center: center,
+    center: bounds.getCenter(),
+    zoom: 11,
     maxBounds: bounds,
-    zoom: 12,
-    layers: [Stamen_TonerLite]
-    })
-  .addControl(layerControl);
-  map.addControl(sidebar);
-
-  var parcels = L.esri.dynamicMapLayer('https://gismaps.kingcounty.gov/arcgis/rest/services/Property/KingCo_PropertyInfo/MapServer', {
-     opacity: 0.2,
-     position: 'back',
-     useCors: false
+    maxBoundsViscosity: 1.0
   });
 
-   parcels.addTo(map);
-   houses.addTo(map);
+  // CartoDB Positron — no API key required
+  L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ' +
+        '&copy; <a href="https://carto.com/attributions">CARTO</a> | ' +
+        'Sales data: <a href="https://www.kingcounty.gov/">King County GIS</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }
+  ).addTo(map);
 
-   var identifiedFeature;
-   var pane = document.getElementById('selectedFeatures');
-   var details = document.getElementById('propertyDetails');
-   var logo;
+  // King County parcel outlines (background reference, low opacity)
+  L.esri.dynamicMapLayer({
+    url: 'https://gismaps.kingcounty.gov/arcgis/rest/services/Property/KingCo_PropertyInfo/MapServer',
+    layers: [0],
+    opacity: 0.15,
+    useCors: false
+  }).addTo(map);
 
-   function animateIcon() {
+  // --- Sidebar ---
+  var sidebar = document.getElementById('sidebar');
+  var featuredImage = document.getElementById('featured-image');
+  var propertySummary = document.getElementById('property-summary');
+  var propertySpecs = document.getElementById('property-specs');
+  var statsLabel = document.getElementById('stats-label');
 
-     return logo;
-   }
+  function showSidebar() { sidebar.classList.remove('collapsed'); }
+  function hideSidebar() { sidebar.classList.add('collapsed'); }
 
-   function renderImage(url) {
-     $('#featuredImage').css( {
-        'background-image': 'url("' + url + '")'
+  document.getElementById('sidebar-close').addEventListener('click', hideSidebar);
+
+  // --- Track highlighted parcel ---
+  var highlightLayer = null;
+
+  // --- Sales layer: $1M+ residential sold in the last 12 months ---
+  var salesWhere =
+    "SalePrice > 1000000 AND Principal_Use = 'RESIDENTIAL' AND SaleDate >= " + dateEpoch;
+
+  var allPrices = [];
+
+  var salesLayer = L.esri.featureLayer({
+    url: 'https://gismaps.kingcounty.gov/arcgis/rest/services/Property/KingCo_PropertyInfo/MapServer/3',
+    where: salesWhere,
+    pointToLayer: function (feature, latlng) {
+      var price = feature.properties.SalePrice;
+      return L.circleMarker(latlng, {
+        radius:      priceRadius(price),
+        fillColor:   priceColor(price),
+        color:       '#fff',
+        weight:      1,
+        opacity:     0.9,
+        fillOpacity: 0.85
       });
-   };
-
-   function renderDetails(details) {
-     return L.Util.template('<div class="detailContainer"><div class="flex"> <div>{totalSquareFootage}<div class="propertyLabel">sq. ft.</div></div> <div>{beds}<div class="propertyLabel">bedrooms</div></div> <div>{baths}<div class="propertyLabel">bathrooms</div></div> <div>{yearBuilt}<div class="propertyLabel">year built</div></div></div> </div>', details);
-   };
-
-   function getImage(pin) {
-     $.get("/api/images/" + pin + "", function (data) {
-     function render () {
-       renderImage(data.propertyDetails.imageUrl);
-       details.innerHTML = renderDetails(data.propertyDetails);
-       console.log(data.propertyDetails);
-     };
-
-     render();
-
-     });
-   };
-
-
-   function getPane(featureCollection) {
-     var sale_date = moment(featureCollection.features[0].properties.SaleDate).fromNow();
-     var sale_price = numeral(featureCollection.features[0].properties.SalePrice).format('$ 0,0[.]00');
-     var pin = featureCollection.features[0].properties.PIN;
-     getImage(pin);
-
-     return L.Util.template(
-         '<div class="headlineContainer"><h1 id="headline"><span class="addr">{FullAddr}</span> sold for&nbsp;<br><span class="price">' + sale_price + '</span><br>&nbsp;about&nbsp;<span class="when">' + sale_date + '</span></h1></div>', featureCollection.features[2].properties);
-
-   };
-
-   houses.on('click', function (e) {
-    if(identifiedFeature){
-      map.removeLayer(identifiedFeature);
-      pane.innerHTML = 'Loading';
-
-    } else { sidebar.toggle();}
-    parcels.identify().on(map).at(e.latlng).run(function(error, featureCollection){
-      if (featureCollection.features.length > 0){
-        identifiedFeature = new L.GeoJSON(featureCollection.features[0], {
-          style: function(){
-            return {
-              color: '#3be579',
-              weight: 8,
-              opacity: 1,
-              fillOpacity: 0
-            };
-          }
-        }).addTo(map);
-
-
-
-        pane.innerHTML = getPane(featureCollection);
-        sidebar.show();
-        $(".price").fitText(1.2, { minFontSize: '60px', maxFontSize: '80px' });
-      }
-    });
-  });
-
-  $("#featuredImage").on("click", function() {
-    var visible = sidebar.isVisible();
-    if (!visible) {
-      sidebar.show();
-    } else {
-      sidebar.hide();
     }
   });
 
-});
+  // Collect prices for stats once features load
+  salesLayer.on('load', function () {
+    allPrices = [];
+    salesLayer.eachFeature(function (layer) {
+      allPrices.push(layer.feature.properties.SalePrice);
+    });
+    updateStats();
+  });
+
+  function updateStats() {
+    if (!allPrices.length) {
+      statsLabel.textContent = 'No sales found for this period.';
+      return;
+    }
+    var sorted = allPrices.slice().sort(function (a, b) { return a - b; });
+    var median = sorted[Math.floor(sorted.length / 2)];
+    statsLabel.innerHTML =
+      '<strong>' + allPrices.length + '</strong> homes sold over $1M in the last 12 months &nbsp;|&nbsp; ' +
+      'Median: <strong>' + numeral(median).format('$0,0') + '</strong>';
+  }
+
+  salesLayer.addTo(map);
+
+  // --- Parcels identify layer for parcel outline on click ---
+  var parcelsIdentify = L.esri.dynamicMapLayer({
+    url: 'https://gismaps.kingcounty.gov/arcgis/rest/services/Property/KingCo_PropertyInfo/MapServer',
+    opacity: 0,
+    useCors: false
+  }).addTo(map);
+
+  // --- Click handler ---
+  salesLayer.on('click', function (e) {
+    var props = e.layer.feature.properties;
+    var price = props.SalePrice;
+    var saleDate = props.SaleDate;
+    var pin = props.PIN;
+    var address = [props.SitusStreet, props.SitusCity]
+      .filter(Boolean).join(', ') || 'King County Property';
+
+    // Highlight the clicked parcel outline
+    if (highlightLayer) {
+      map.removeLayer(highlightLayer);
+      highlightLayer = null;
+    }
+
+    parcelsIdentify.identify()
+      .on(map)
+      .at(e.latlng)
+      .run(function (err, featureCollection) {
+        if (!err && featureCollection && featureCollection.features.length > 0) {
+          highlightLayer = L.geoJSON(featureCollection.features[0], {
+            style: {
+              color: '#3be579',
+              weight: 6,
+              opacity: 1,
+              fillOpacity: 0
+            }
+          }).addTo(map);
+        }
+      });
+
+    // Populate sidebar summary
+    featuredImage.style.backgroundImage = '';
+    featuredImage.style.backgroundColor = '#1a1a2e';
+    propertySummary.innerHTML =
+      '<div class="prop-address">' + address + '</div>' +
+      '<div class="prop-price">' + numeral(price).format('$0,0') + '</div>' +
+      '<div class="prop-date">Sold ' + moment(saleDate).fromNow() + '</div>';
+    propertySpecs.innerHTML = '<div class="loading">Loading details\u2026</div>';
+
+    showSidebar();
+
+    // Fetch property details from our server proxy
+    if (pin) {
+      fetch('/api/property/' + pin)
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.imageUrl) {
+            featuredImage.style.backgroundImage = 'url("' + d.imageUrl + '")';
+          }
+          propertySpecs.innerHTML =
+            specRow('Sq Ft', d.sqft) +
+            specRow('Beds', d.beds) +
+            specRow('Baths', d.baths) +
+            specRow('Year Built', d.yearBuilt) +
+            specRow('Grade', d.grade) +
+            specRow('Condition', d.condition);
+        })
+        .catch(function () {
+          propertySpecs.innerHTML = '';
+        });
+    }
+  });
+
+  function specRow(label, value) {
+    if (!value) return '';
+    return '<div class="spec-row">' +
+      '<span class="spec-label">' + label + '</span>' +
+      '<span class="spec-value">' + value + '</span>' +
+      '</div>';
+  }
+
+  // --- Legend ---
+  var legendEl = document.createElement('div');
+  legendEl.id = 'legend';
+  legendEl.innerHTML =
+    '<div><span class="legend-dot" style="background:#f9c784"></span>$1M&ndash;$1.5M</div>' +
+    '<div><span class="legend-dot" style="background:#f4845f"></span>$1.5M&ndash;$2M</div>' +
+    '<div><span class="legend-dot" style="background:#e84545"></span>$2M&ndash;$3M</div>' +
+    '<div><span class="legend-dot" style="background:#bd1550"></span>$3M&ndash;$5M</div>' +
+    '<div><span class="legend-dot" style="background:#6d0000"></span>$5M+</div>';
+  document.body.appendChild(legendEl);
+
+  // Click map background to close sidebar
+  map.on('click', function (e) {
+    if (e.originalEvent.target.id === 'map') {
+      hideSidebar();
+      if (highlightLayer) {
+        map.removeLayer(highlightLayer);
+        highlightLayer = null;
+      }
+    }
+  });
+
+}());

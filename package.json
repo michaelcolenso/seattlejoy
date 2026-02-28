@@ -1,66 +1,21 @@
 {
   "name": "seattlejoy",
-  "version": "0.0.1",
-  "engines": {
-    "node": ">=20"
-  },
+  "version": "1.0.0",
+  "description": "King County $1M+ home sales map — last 12 months",
+  "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "test": "mocha"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/michaelcolenso/seattlejoy"
+    "start": "node app.js"
   },
   "dependencies": {
-    "async": "^3.2.5",
-    "bcryptjs": "^2.4.3",
-    "body-parser": "^1.20.2",
     "cheerio": "^1.0.0",
-    "clockwork": "^0.1.1",
     "compression": "^1.7.4",
-    "connect-mongo": "^5.1.0",
-    "cookie-parser": "^1.4.6",
     "errorhandler": "^1.5.1",
     "express": "^4.18.2",
-    "express-flash": "^0.0.2",
-    "express-session": "^1.17.3",
-    "express-validator": "^2.21.0",
-    "fbgraph": "^0.2.10",
-    "github-api": "^0.7.0",
-    "instagram-node": "^0.4.0",
-    "lastfm": "^0.9.0",
-    "lodash": "^4.17.21",
-    "lusca": "^1.7.0",
-    "method-override": "^3.0.0",
-    "mongodb": "^6.3.0",
-    "mongoose": "^7.6.0",
     "morgan": "^1.10.0",
-    "node-foursquare": "^0.2.1",
-    "node-linkedin": "^0.2.0",
-    "nodemailer": "^6.9.7",
-    "passport": "^0.6.0",
-    "passport-facebook": "^3.0.0",
-    "passport-github": "^1.1.0",
-    "passport-google-oauth": "^2.0.0",
-    "passport-instagram": "^1.0.0",
-    "passport-linkedin-oauth2": "^2.0.0",
-    "passport-local": "^1.0.0",
-    "passport-oauth": "^1.0.0",
-    "passport-twitter": "^1.0.4",
     "pug": "^3.0.2",
-    "request": "^2.88.2",
-    "socket.io": "^4.7.2",
-    "stripe": "^14.0.0",
-    "topojson": "^3.0.2",
-    "tumblr.js": "^3.0.0",
-    "twilio": "^4.20.0",
-    "twit": "^2.2.11",
-    "validator": "^13.11.0"
+    "request": "^2.88.2"
   },
-  "devDependencies": {
-    "chai": "^4.3.10",
-    "mocha": "^10.2.0",
-    "supertest": "^6.3.3"
+  "engines": {
+    "node": ">=20"
   }
 }
