@@ -16,8 +16,6 @@ var twilio = require('twilio')(secrets.twilio.sid, secrets.twilio.token);
 var Linkedin = require('node-linkedin')(secrets.linkedin.clientID, secrets.linkedin.clientSecret, secrets.linkedin.callbackURL);
 var clockwork = require('clockwork')({key: secrets.clockwork.apiKey});
 var ig = require('instagram-node').instagram();
-var Y = require('yui/yql');
-var base64 = require('node-base64-image');
 var _ = require('lodash');
 
 /**
@@ -651,13 +649,9 @@ exports.getInstagram = function(req, res, next) {
  * Yahoo API example.
  */
 exports.getYahoo = function(req, res) {
-  Y.YQL('SELECT * FROM weather.forecast WHERE (location = 10007)', function(response) {
-    var location = response.query.results.channel.location;
-    var condition = response.query.results.channel.item.condition;
-    res.render('api/yahoo', {
-      title: 'Yahoo API',
-      location: location,
-      condition: condition
-    });
+  res.render('api/yahoo', {
+    title: 'Yahoo API',
+    location: null,
+    condition: null
   });
 };

@@ -1,0 +1,19 @@
+doctype html
+html(lang='en')
+  head
+    meta(charset='utf-8')
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    meta(name='description', content='King County homes sold for over $1 million in the last 12 months.')
+    title= title || 'SeattleJoy'
+    link(rel='stylesheet', href='/js/leaflet/dist/leaflet.css')
+    link(rel='stylesheet', href='/js/leaflet-sidebar/src/L.Control.Sidebar.css')
+    link(rel='stylesheet', href='/css/styles.css')
+  body
+    block content
+    script(src='/js/lib/jquery-2.1.1.min.js')
+    script(src='/js/leaflet/dist/leaflet.js')
+    script(src='/js/esri-leaflet/dist/esri-leaflet.js')
+    script(src='/js/leaflet-sidebar/src/L.Control.Sidebar.js')
+    script(src='/js/moment/min/moment.min.js')
+    script(src='/js/numeral/min/numeral.min.js')
+    script(src='/js/main.js')
