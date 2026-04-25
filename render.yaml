@@ -5,14 +5,10 @@ services:
     runtime: node
     plan: free
     branch: master
-    buildCommand: npm install
+    buildCommand: npm ci && npm run build
     startCommand: npm start
     healthCheckPath: /
     autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
-      - key: SESSION_SECRET
-        sync: false
-      - key: MONGO_URL
-        sync: false
